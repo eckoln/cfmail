@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  runtime  = "workerd"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Enums
+enum EmailType {
+  inbound
+  outbound
+}
+
+enum EventType {
+  sent
+  delivered
+  failed
+  received
+  clicked
+  opened
+  scheduled
+}
+
+enum RecipientRole {
+  to
+  cc
+  bcc
+}
+
+// Models
+model Email {
+  id         String    @id @default(uuid())
+  type       EmailType
+  from       String
+  subject    String
+  rawBody    String?
+  rawHeaders Json?     @default("[]")
+
+  messageId String?
+  inReplyTo String?
+  lastEvent EventType?
+
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  recipients Recipient[]
+
+  @@index([createdAt])
+  @@map("emails")
+}
+
+model Recipient {
+  id      String @id @default(uuid())
+  emailId String
+
+  emailAddress String
+  role         RecipientRole
+
+  status EventType @default(sent)
+  sentAt DateTime? @default(now())
+
+  error String?
+  email Email   @relation(fields: [emailId], references: [id], onDelete: Cascade)
+
+  @@index([emailId])
+  @@index([emailAddress])
+  @@map("recipients")
+}

@@ -1,0 +1,6 @@
+# production
+POLICY_AUD="your-policy-aud"
+TEAM_DOMAIN="https://your-team.cloudflareaccess.com"
+
+# local development
+#DATABASE_URL="file:./.wrangler/state/v3/d1/miniflare-D1DatabaseObject/0be84d0307ef86e54dbfe4f11b511c2435cf9c91d575809a8620f685cdfd9157.sqlite"

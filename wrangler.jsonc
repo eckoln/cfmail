@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cfmail",
+  "main": "./src/server.ts",
+  "compatibility_date": "2026-04-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "remote": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DATABASE",
+      "database_name": "cfmail-db",
+      "database_id": "6e7225eb-8bd1-4ee6-af58-b4d3eef486d0",
+      "migrations_dir": "./prisma/migrations"
+    }
+  ]
+}
