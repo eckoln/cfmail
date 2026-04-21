@@ -4,7 +4,7 @@
   <p>Send and receive emails using your own Cloudflare infrastructure.</p>
 </div>
 
-<img width="1918" height="920" alt="1" src="https://github.com/user-attachments/assets/745b1971-4d0d-43b1-9bb0-21c473aa67fd" />
+<img alt="Preview" src="./preview.png" />
 
 ## Setup
 

@@ -1,8 +1,8 @@
+import { ClipboardText, LayerCard, Tabs, Text } from '@cloudflare/kumo'
 import { EnvelopeIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import React from 'react'
 import { getEmailByIdOptions } from '@/lib/queries/emails'
 
 export const Route = createFileRoute('/(app)/emails/$id')({
@@ -30,84 +30,86 @@ export const Route = createFileRoute('/(app)/emails/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data: email } = useSuspenseQuery(getEmailByIdOptions(id))
+  const [activeTab, setActiveTab] = React.useState<string>('preview')
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-6">
-        <div className="flex size-14 items-center justify-center rounded-xl bg-primary">
-          <EnvelopeIcon size={36} />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <EnvelopeIcon className="text-kumo-strong" size={36} />
+          <div>
+            <Text variant="secondary">
+              {email.type === 'inbound' ? 'Received' : 'Email'}
+            </Text>
+            <Text variant="heading2">
+              {email.type === 'inbound'
+                ? email.from
+                : email.recipients.length > 1
+                  ? 'Multiple Recipients'
+                  : email.recipients[0].emailAddress}
+            </Text>
+          </div>
         </div>
-        <div className="space-y-2">
-          <h6 className="text-sm font-medium leading-none text-muted-foreground">
-            {email.type === 'inbound' ? 'Received' : 'Email'}
-          </h6>
-          <h1 className="font-semibold text-2xl leading-none">
-            {email.type === 'inbound'
-              ? email.from
-              : email.recipients.length > 1
-                ? 'Multiple Recipients'
-                : email.recipients[0].emailAddress}
-          </h1>
-        </div>
+        <ClipboardText text={email.id} />
       </div>
 
-      <div className="grid grid-cols-4 gap-6">
-        <div className="space-y-2">
-          <h6 className="text-sm font-medium leading-none text-muted-foreground">
-            From
-          </h6>
-          <p className="text-sm leading-none">{email.from}</p>
-        </div>
-        <div className="space-y-2">
-          <h6 className="text-sm font-medium leading-none text-muted-foreground">
-            Subject
-          </h6>
-          <p className="text-sm leading-none">{email.subject}</p>
-        </div>
-        <div className="space-y-2">
-          <h6 className="text-sm font-medium leading-none text-muted-foreground">
-            To
-          </h6>
-          <p className="text-sm leading-none">
-            {email.type === 'outbound'
-              ? email.recipients.length > 1
-                ? `${email.recipients[0].emailAddress} (+${email.recipients.length - 1})`
-                : email.recipients[0].emailAddress
-              : email.recipients[0].emailAddress}
-          </p>
-        </div>
-        <div className="space-y-2">
-          <h6 className="text-sm font-medium leading-none text-muted-foreground">
-            ID
-          </h6>
-          <p className="text-sm leading-none">{email.id}</p>
-        </div>
+      <div className="grid grid-cols-3 gap-8">
+        {[
+          {
+            label: 'From',
+            value: email.from,
+          },
+          {
+            label: 'Subject',
+            value: email.subject,
+          },
+          {
+            label: 'To',
+            value:
+              email.type === 'outbound'
+                ? email.recipients.length > 1
+                  ? `${email.recipients[0].emailAddress} (+${email.recipients.length - 1})`
+                  : email.recipients[0].emailAddress
+                : email.recipients[0].emailAddress,
+          },
+        ].map((card, index) => (
+          <LayerCard className="rounded-lg p-4" key={index.toString()}>
+            <Text variant="secondary" bold>
+              {card.label}
+            </Text>
+            <Text truncate>{card.value}</Text>
+          </LayerCard>
+        ))}
       </div>
 
-      <Card>
-        <CardContent>
-          <Tabs className="gap-4" defaultValue="preview">
-            <TabsList>
-              <TabsTrigger value="preview">Prevew</TabsTrigger>
-              <TabsTrigger value="raw">Raw</TabsTrigger>
-            </TabsList>
-            <TabsContent value="preview" className="overflow-auto max-h-123">
-              <iframe
-                title="Email Content"
-                width="100%"
-                height="100%"
-                srcDoc={email.rawBody || ''}
-                sandbox="allow-popups"
-              />
-            </TabsContent>
-            <TabsContent value="raw" className="overflow-auto max-h-123">
-              <pre>
-                <code>{JSON.stringify(email, null, 2)}</code>
-              </pre>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      <LayerCard>
+        <LayerCard.Secondary>
+          <Tabs
+            className="w-fit"
+            variant="underline"
+            tabs={[
+              { value: 'preview', label: 'Preview' },
+              { value: 'raw', label: 'Raw' },
+            ]}
+            value={activeTab}
+            onValueChange={setActiveTab}
+          />
+        </LayerCard.Secondary>
+        <LayerCard.Primary>
+          {activeTab === 'preview' ? (
+            <iframe
+              title="Email Preview"
+              className="w-full h-full"
+              srcDoc={email.rawBody || ''}
+              sandbox="allow-same-origin"
+            />
+          ) : (
+            <pre className="overflow-auto w-full max-h-125">
+              <code>{JSON.stringify(email, null, 2)}</code>
+            </pre>
+          )}
+        </LayerCard.Primary>
+      </LayerCard>
     </div>
   )
 }

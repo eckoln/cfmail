@@ -1,10 +1,10 @@
+import { Tabs, Text } from '@cloudflare/kumo'
 import {
   createFileRoute,
   Link,
   Outlet,
   useLocation,
 } from '@tanstack/react-router'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const Route = createFileRoute('/(app)/emails/(lists)')({
   component: RouteComponent,
@@ -20,23 +20,29 @@ export const Route = createFileRoute('/(app)/emails/(lists)')({
 function RouteComponent() {
   const location = useLocation()
   const pathname = location.pathname.split('/').pop()
-  const activeTab = pathname === 'receiving' ? 'receiving' : 'emails'
 
   return (
     <div className="space-y-6">
-      <h1 className="font-semibold text-2xl leading-none">Emails</h1>
+      <Text variant="heading1">Emails</Text>
 
       <div className="space-y-4">
-        <Tabs value={activeTab}>
-          <TabsList variant="line">
-            <TabsTrigger value="emails" asChild>
-              <Link to="/emails">Sending</Link>
-            </TabsTrigger>
-            <TabsTrigger value="receiving" asChild>
-              <Link to="/emails/receiving">Receiving</Link>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <Tabs
+          className="w-fit"
+          variant="segmented"
+          tabs={[
+            {
+              value: 'emails',
+              label: 'Sending',
+              render: (props) => <Link to="/emails" {...props} />,
+            },
+            {
+              value: 'receiving',
+              label: 'Receiving',
+              render: (props) => <Link to="/emails/receiving" {...props} />,
+            },
+          ]}
+          value={pathname}
+        />
 
         <Outlet />
       </div>
