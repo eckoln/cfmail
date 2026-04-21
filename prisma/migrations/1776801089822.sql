@@ -7,8 +7,8 @@ CREATE TABLE "emails" (
     "rawBody" TEXT,
     "rawHeaders" JSONB DEFAULT [],
     "messageId" TEXT,
-    "inReplyTo" TEXT,
-    "lastEvent" TEXT,
+    "replyTo" JSONB DEFAULT [],
+    "lastEvent" TEXT NOT NULL,
     "scheduledAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -19,7 +19,7 @@ CREATE TABLE "recipients" (
     "emailId" TEXT NOT NULL,
     "emailAddress" TEXT NOT NULL,
     "role" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'sent',
+    "status" TEXT NOT NULL,
     "sentAt" DATETIME DEFAULT CURRENT_TIMESTAMP,
     "error" TEXT,
     CONSTRAINT "recipients_emailId_fkey" FOREIGN KEY ("emailId") REFERENCES "emails" ("id") ON DELETE CASCADE ON UPDATE CASCADE

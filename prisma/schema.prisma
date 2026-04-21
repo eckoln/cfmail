@@ -20,13 +20,12 @@ enum EmailType {
 }
 
 enum EventType {
-  sent
+  // outbound
   delivered
   failed
-  received
-  clicked
-  opened
   scheduled
+  // inbound
+  received
 }
 
 enum RecipientRole {
@@ -45,8 +44,8 @@ model Email {
   rawHeaders Json?     @default("[]")
 
   messageId String?
-  inReplyTo String?
-  lastEvent EventType?
+  replyTo   Json?     @default("[]")
+  lastEvent EventType
 
   scheduledAt DateTime?
   createdAt   DateTime  @default(now())
@@ -64,7 +63,7 @@ model Recipient {
   emailAddress String
   role         RecipientRole
 
-  status EventType @default(sent)
+  status EventType
   sentAt DateTime? @default(now())
 
   error String?
