@@ -3,24 +3,37 @@ import { createFileRoute } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
 import z from 'zod'
 import { createEmail } from '@/server/database/queries/emails'
+import { apiResponse } from '@/utils/api-response'
 
-const schema = z.object({
-  from: z.email(),
-  to: z.array(z.email()).max(25),
-  subject: z.string(),
-  html: z.string(),
-})
+const schema = z
+  .object({
+    from: z.email().min(1),
+    to: z.array(z.email()).min(1),
+    cc: z.array(z.email()).optional().default([]),
+    bcc: z.array(z.email()).optional().default([]),
+    subject: z.string().min(1),
+    html: z.string().min(1),
+  })
+  .superRefine(({ to, cc, bcc }, ctx) => {
+    const totalRecipients = to.length + cc.length + bcc.length
+    if (totalRecipients > 50) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Maximum 50 recipients (to, cc, bcc) allowed.',
+        path: ['to', 'cc', 'bcc'],
+      })
+    }
+  })
 
 const validationMiddleware = createMiddleware({ type: 'request' }).server(
   async ({ next, request }) => {
     const payload = await request.json()
     const result = schema.safeParse(payload)
+
     if (!result.success) {
-      return new Response(
-        JSON.stringify({ success: false, errors: result.error.issues }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
-      )
+      return apiResponse({ status: false, errors: result.error.issues }, 400)
     }
+
     return next({ context: { data: result.data } })
   },
 )
@@ -42,7 +55,6 @@ export const Route = createFileRoute('/api/emails/')({
                 })
                 return { emailAddress: email }
               } catch (error) {
-                console.error(`Failed to send email to ${email}:`, error)
                 return {
                   emailAddress: email,
                   error: error instanceof Error ? error.message : String(error),
@@ -71,23 +83,11 @@ export const Route = createFileRoute('/api/emails/')({
             },
           })
 
-          return new Response(
-            JSON.stringify({
-              success: true,
-              result: {
-                id: result.id,
-              },
-            }),
-            { status: 200, headers: { 'Content-Type': 'application/json' } },
-          )
-        } catch (error) {
-          console.error(error)
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: 'An unknown error occurred',
-            }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } },
+          return apiResponse({ status: true, result: { id: result.id } }, 201)
+        } catch {
+          return apiResponse(
+            { status: false, errors: 'An unknown error occurred' },
+            500,
           )
         }
       },

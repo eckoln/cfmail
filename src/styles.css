@@ -5,17 +5,20 @@
 @import "@fontsource-variable/inter";
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Inter Variable', sans-serif;
+  --font-heading: var(--font-sans);
+  --font-sans: 'Inter Variable', sans-serif;
 }
 
-
 @layer base {
+  * {
+    @apply border-kumo-hairline;
+  }
+
   html {
     @apply font-sans;
   }
 
   body {
-    @apply text-base
+    @apply bg-kumo-canvas text-kumo-default text-base
   }
 }
