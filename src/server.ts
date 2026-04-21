@@ -60,23 +60,21 @@ export default {
         subject: email.subject || '',
         rawBody: email.html || email.text || '',
         rawHeaders: email.headers,
-        inReplyTo: email.inReplyTo,
+        replyTo:
+          email.replyTo?.map((reply) => reply.address || '').filter(Boolean) ||
+          undefined,
         messageId: email.messageId,
         lastEvent: 'received',
         recipients: {
-          createMany: {
-            data: email.to.map((recipient) => {
-              return {
-                emailAddress: recipient.address || '',
-                role: 'to',
-                status: 'received',
-              }
-            }),
+          create: {
+            emailAddress: message.to,
+            role: 'to',
+            status: 'received',
           },
         },
       })
     } catch (error) {
-      console.error(error)
+      console.error('Error while processing email: ', error)
       message.setReject('550 Message rejected due to processing error')
     }
   },

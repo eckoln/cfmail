@@ -7,10 +7,17 @@ import { apiResponse } from '@/utils/api-response'
 
 const schema = z
   .object({
-    from: z.email().min(1),
+    from: z.union([
+      z.object({
+        name: z.string(),
+        email: z.email(),
+      }),
+      z.email(),
+    ]),
     to: z.array(z.email()).min(1),
     cc: z.array(z.email()).optional().default([]),
     bcc: z.array(z.email()).optional().default([]),
+    replyTo: z.email().optional(),
     subject: z.string().min(1),
     html: z.string().min(1),
   })
@@ -43,48 +50,62 @@ export const Route = createFileRoute('/api/emails/')({
     middleware: [validationMiddleware],
     handlers: {
       POST: async ({ context }) => {
+        const payload = context.data
+
         try {
-          const sendResults = await Promise.all(
-            context.data.to.map(async (email) => {
-              try {
-                await env.EMAIL.send({
-                  to: email,
-                  from: context.data.from,
-                  subject: context.data.subject,
-                  html: context.data.html,
-                })
-                return { emailAddress: email }
-              } catch (error) {
-                return {
-                  emailAddress: email,
-                  error: error instanceof Error ? error.message : String(error),
-                }
-              }
-            }),
-          )
+          const response = await env.EMAIL.send({
+            from: payload.from,
+            subject: payload.subject,
+            to: payload.to,
+            cc: payload.cc,
+            bcc: payload.bcc,
+            replyTo: payload.replyTo,
+            html: payload.html,
+          })
 
-          const deliveredCount = sendResults.filter((r) => !r.error).length
-          const failedCount = sendResults.filter((r) => r.error).length
-
-          const result = await createEmail({
+          const email = await createEmail({
             type: 'outbound',
-            from: context.data.from,
-            subject: context.data.subject,
-            rawBody: context.data.html,
-            lastEvent: deliveredCount > failedCount ? 'delivered' : 'failed',
+            from:
+              typeof payload.from === 'string'
+                ? payload.from
+                : payload.from.email,
+            subject: payload.subject,
+            rawBody: payload.html,
+            replyTo: payload.replyTo ? [payload.replyTo] : undefined,
+            messageId: response.messageId,
+            lastEvent: 'delivered',
             recipients: {
               createMany: {
-                data: sendResults.map((r) => ({
-                  emailAddress: r.emailAddress,
-                  role: 'to',
-                  status: r.error ? 'failed' : 'delivered',
-                })),
+                data: [
+                  ...payload.to.map((email) => ({
+                    emailAddress: email,
+                    role: 'to' as const,
+                    status: 'delivered' as const,
+                  })),
+                  ...(payload.cc || []).map((email) => ({
+                    emailAddress: email,
+                    role: 'cc' as const,
+                    status: 'delivered' as const,
+                  })),
+                  ...(payload.bcc || []).map((email) => ({
+                    emailAddress: email,
+                    role: 'bcc' as const,
+                    status: 'delivered' as const,
+                  })),
+                ],
               },
             },
           })
 
-          return apiResponse({ status: true, result: { id: result.id } }, 201)
-        } catch {
+          return apiResponse({ status: true, result: { id: email.id } }, 200)
+        } catch (error) {
+          if (error instanceof Error) {
+            console.error(
+              'Email sending failed:',
+              (error as Error & { code: string }).code,
+              error.message,
+            )
+          }
           return apiResponse(
             { status: false, errors: 'An unknown error occurred' },
             500,

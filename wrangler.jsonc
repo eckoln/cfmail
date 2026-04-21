@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cfmail",
   "main": "./src/server.ts",
-  "compatibility_date": "2026-04-17",
+  "compatibility_date": "2026-04-21",
   "compatibility_flags": ["nodejs_compat"],
   "send_email": [
     {
