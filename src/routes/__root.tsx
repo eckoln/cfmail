@@ -4,8 +4,6 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router'
-import { Toaster } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRouteWithContext<{
@@ -36,13 +34,12 @@ export const Route = createRootRouteWithContext<{
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark scheme-only-dark">
+    <html lang="en" className="scheme-only-dark" data-mode="dark">
       <head>
         <HeadContent />
       </head>
-      <body>
-        <TooltipProvider>{children}</TooltipProvider>
-        <Toaster />
+      <body className="flex h-screen w-full">
+        {children}
         <Scripts />
       </body>
     </html>

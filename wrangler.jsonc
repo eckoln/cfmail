@@ -14,7 +14,7 @@
     {
       "binding": "DATABASE",
       "database_name": "cfmail-db",
-      "database_id": "6e7225eb-8bd1-4ee6-af58-b4d3eef486d0",
+      "database_id": "8c885bb1-5717-4a01-9323-669d0c34adad",
       "migrations_dir": "./prisma/migrations"
     }
   ]

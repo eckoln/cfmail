@@ -1,20 +1,7 @@
+import { Empty, LayerCard, Table } from '@cloudflare/kumo'
 import { EnvelopeIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@/components/ui/empty'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { listEmailsOptions } from '@/lib/queries/emails'
 
 export const Route = createFileRoute('/(app)/emails/(lists)/receiving')({
@@ -30,53 +17,47 @@ function RouteComponent() {
   return (
     <div>
       {emails.length > 0 ? (
-        <Table className="rounded-lg overflow-hidden">
-          <TableHeader className="bg-muted ">
-            <TableRow>
-              <TableHead>From</TableHead>
-              <TableHead>To</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead className="text-right">Received</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {emails.map((email) => {
-              const recipients = email.recipients
-                .map((r) => r.emailAddress)
-                .join(', ')
-              return (
-                <TableRow key={email.id}>
-                  <TableCell>
-                    <Link
-                      to="/emails/$id"
-                      params={{ id: email.id }}
-                      className="flex items-center gap-3 w-fit hover:underline"
-                    >
-                      <div className="flex size-7 items-center justify-center rounded-md bg-primary">
+        <LayerCard>
+          <Table layout="fixed">
+            <Table.Header variant="compact">
+              <Table.Row>
+                <Table.Head>From</Table.Head>
+                <Table.Head>To</Table.Head>
+                <Table.Head>Subject</Table.Head>
+                <Table.Head className="text-right">Received</Table.Head>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {emails.map((email) => {
+                const recipient = email.recipients.filter(
+                  (r) => r.role === 'to',
+                )[0]
+
+                return (
+                  <Table.Row key={email.id}>
+                    <Table.Cell>
+                      <Link
+                        to="/emails/$id"
+                        params={{ id: email.id }}
+                        className="flex items-center gap-3 w-fit hover:underline [&>svg]:text-kumo-strong"
+                      >
                         <EnvelopeIcon size={20} />
-                      </div>
-                      <span>{email.from}</span>
-                    </Link>
-                  </TableCell>
-                  <TableCell>{recipients}</TableCell>
-                  <TableCell>{email.subject}</TableCell>
-                  <TableCell className="text-right">
-                    {new Date(email.createdAt).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
+                        <span>{email.from}</span>
+                      </Link>
+                    </Table.Cell>
+                    <Table.Cell>{recipient.emailAddress}</Table.Cell>
+                    <Table.Cell>{email.subject}</Table.Cell>
+                    <Table.Cell className="text-right">
+                      {new Date(email.createdAt).toLocaleString()}
+                    </Table.Cell>
+                  </Table.Row>
+                )
+              })}
+            </Table.Body>
+          </Table>
+        </LayerCard>
       ) : (
-        <Empty className="border border-dashed rounded-lg py-12">
-          <EmptyHeader>
-            <EmptyTitle>No received emails yet</EmptyTitle>
-            <EmptyDescription>
-              Receive emails at [EMAIL_ADDRESS]
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <Empty title="No received emails yet" />
       )}
     </div>
   )
