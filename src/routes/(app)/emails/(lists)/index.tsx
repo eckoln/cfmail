@@ -58,10 +58,14 @@ function RouteComponent() {
                     <Table.Cell>
                       <Badge
                         variant={
-                          email.lastEvent === 'delivered' ? 'green' : 'red'
+                          (email.lastEvent === 'sent' && 'outline') ||
+                          (email.lastEvent === 'delivered' && 'green') ||
+                          (email.lastEvent === 'failed' && 'red') ||
+                          undefined
                         }
+                        className="capitalize"
                       >
-                        {email.lastEvent?.toLocaleLowerCase()}
+                        {email.lastEvent.toLocaleLowerCase()}
                       </Badge>
                     </Table.Cell>
                     <Table.Cell>{email.subject}</Table.Cell>

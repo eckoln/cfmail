@@ -21,6 +21,7 @@ enum EmailType {
 
 enum EventType {
   // outbound
+  sent
   delivered
   failed
   scheduled

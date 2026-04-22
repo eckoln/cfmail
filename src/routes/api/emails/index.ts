@@ -1,32 +1,40 @@
 import { env } from 'cloudflare:workers'
 import { createFileRoute } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
-import z from 'zod'
+import { z } from 'zod'
 import { createEmail } from '@/server/database/queries/emails'
 import { apiResponse } from '@/utils/api-response'
+
+const recipientSchema = z
+  .union([z.email(), z.array(z.email()).nonempty()])
+  .transform((val) => (Array.isArray(val) ? val : [val]))
 
 const schema = z
   .object({
     from: z.union([
+      z.email(),
       z.object({
-        name: z.string(),
+        name: z.string().nonempty(),
         email: z.email(),
       }),
-      z.email(),
     ]),
-    to: z.array(z.email()).min(1),
-    cc: z.array(z.email()).optional().default([]),
-    bcc: z.array(z.email()).optional().default([]),
+
+    to: recipientSchema,
+    cc: recipientSchema.optional().default([]),
+    bcc: recipientSchema.optional().default([]),
+
+    subject: z.string().nonempty(),
+    html: z.string().optional(),
+    text: z.string().optional(),
     replyTo: z.email().optional(),
-    subject: z.string().min(1),
-    html: z.string().min(1),
   })
   .superRefine(({ to, cc, bcc }, ctx) => {
-    const totalRecipients = to.length + cc.length + bcc.length
-    if (totalRecipients > 50) {
+    const total = to.length + cc.length + bcc.length
+
+    if (total > 50) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Maximum 50 recipients (to, cc, bcc) allowed.',
+        message: `Cloudflare limits total recipients to 50. You have ${total}.`,
         path: ['to', 'cc', 'bcc'],
       })
     }
@@ -73,24 +81,24 @@ export const Route = createFileRoute('/api/emails/')({
             rawBody: payload.html,
             replyTo: payload.replyTo ? [payload.replyTo] : undefined,
             messageId: response.messageId,
-            lastEvent: 'delivered',
+            lastEvent: 'sent',
             recipients: {
               createMany: {
                 data: [
                   ...payload.to.map((email) => ({
                     emailAddress: email,
                     role: 'to' as const,
-                    status: 'delivered' as const,
+                    status: 'sent' as const,
                   })),
                   ...(payload.cc || []).map((email) => ({
                     emailAddress: email,
                     role: 'cc' as const,
-                    status: 'delivered' as const,
+                    status: 'sent' as const,
                   })),
                   ...(payload.bcc || []).map((email) => ({
                     emailAddress: email,
                     role: 'bcc' as const,
-                    status: 'delivered' as const,
+                    status: 'sent' as const,
                   })),
                 ],
               },
