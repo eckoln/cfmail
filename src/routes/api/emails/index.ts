@@ -7,7 +7,7 @@ import { apiResponse } from '@/utils/api-response'
 
 const recipientSchema = z
   .union([z.email(), z.array(z.email()).nonempty()])
-  .transform((val) => (Array.isArray(val) ? val : [val]))
+  .transform((val) => Array.from(new Set(Array.isArray(val) ? val : [val])))
 
 const schema = z
   .object({
