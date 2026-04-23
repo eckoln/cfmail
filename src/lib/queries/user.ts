@@ -8,7 +8,7 @@ export async function getUser(headers: Headers) {
   }
 
   const JWKS = createRemoteJWKSet(
-    new URL(`${env.TEAM_DOMAIN}/cdn-cgi/access/certs`),
+    new URL('/cdn-cgi/access/certs', env.TEAM_DOMAIN),
   )
 
   try {

@@ -1,0 +1,122 @@
+import { Button, Dialog, Input, Select } from '@cloudflare/kumo'
+import { PlusIcon, XIcon } from '@phosphor-icons/react'
+import { useForm } from '@tanstack/react-form'
+import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import type z from 'zod'
+import {
+  createWebhookOptions,
+  createWebhookSchema,
+} from '@/lib/queries/webhooks'
+
+export function CreateWebhookForm() {
+  const navigate = useNavigate()
+  const mutation = useMutation(createWebhookOptions())
+
+  const form = useForm({
+    defaultValues: {
+      endpoint: '',
+      eventTypes: [],
+    } as z.infer<typeof createWebhookSchema>,
+    validators: {
+      onChange: createWebhookSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await mutation.mutateAsync(value, {
+        onSuccess: (data) => {
+          navigate({ to: '/webhooks/$id', params: { id: data.id } })
+        },
+      })
+    },
+  })
+
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger
+        render={(p) => (
+          <Button icon={PlusIcon} {...p}>
+            Add Webhook
+          </Button>
+        )}
+      />
+      <Dialog className="flex flex-col gap-4 p-4 w-full sm:min-w-md">
+        <div className="flex items-start justify-between gap-4">
+          <Dialog.Title className="text-lg font-semibold">
+            Add Webhook
+          </Dialog.Title>
+          <Dialog.Close
+            aria-label="Close"
+            render={(props) => (
+              <Button
+                {...props}
+                variant="secondary"
+                shape="square"
+                size="sm"
+                icon={XIcon}
+                aria-label="Close"
+              />
+            )}
+          />
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            form.handleSubmit()
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            <form.Field name="endpoint">
+              {(field) => {
+                return (
+                  <Input
+                    name={field.name}
+                    type="url"
+                    label="Endpoint URL"
+                    className="w-full"
+                    placeholder="https://"
+                    value={field.state.value}
+                    onChange={(e) => field.setValue(e.target.value)}
+                    required
+                  />
+                )
+              }}
+            </form.Field>
+
+            <form.Field name="eventTypes" mode="array">
+              {(field) => {
+                return (
+                  <Select
+                    name={field.name}
+                    label="Events types"
+                    className="w-full"
+                    items={{
+                      'email.sent': 'email.sent',
+                      'email.received': 'email.received',
+                    }}
+                    value={field.state.value}
+                    onValueChange={(e) => field.setValue(e)}
+                    error={field.state.meta.errors[0]?.message}
+                    multiple
+                    required
+                  />
+                )
+              }}
+            </form.Field>
+
+            <div className="flex justify-start">
+              <Button
+                type="submit"
+                variant="primary"
+                icon={PlusIcon}
+                loading={mutation.isPending}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Dialog>
+    </Dialog.Root>
+  )
+}

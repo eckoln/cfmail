@@ -1,8 +1,10 @@
 import { env } from 'cloudflare:workers'
 import { createFileRoute } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
+import { Prisma } from 'generated/prisma/client'
 import { z } from 'zod'
 import { createEmail } from '@/server/database/queries/emails'
+import { triggerWebhook } from '@/server/webhook/webhook'
 import { apiResponse } from '@/utils/api-response'
 
 const recipientSchema = z
@@ -69,9 +71,28 @@ export const Route = createFileRoute('/api/emails/')({
             bcc: payload.bcc,
             replyTo: payload.replyTo,
             html: payload.html,
+            text: payload.text,
           })
 
-          const email = await createEmail({
+          const recipients = {
+            to: payload.to?.map((email) => ({
+              emailAddress: email,
+              role: 'to' as const,
+              status: 'sent' as const,
+            })),
+            cc: payload.cc?.map((email) => ({
+              emailAddress: email,
+              role: 'cc' as const,
+              status: 'sent' as const,
+            })),
+            bcc: payload.bcc?.map((email) => ({
+              emailAddress: email,
+              role: 'bcc' as const,
+              status: 'sent' as const,
+            })),
+          }
+
+          const createdEmail = await createEmail({
             type: 'outbound',
             from:
               typeof payload.from === 'string'
@@ -84,38 +105,40 @@ export const Route = createFileRoute('/api/emails/')({
             lastEvent: 'sent',
             recipients: {
               createMany: {
-                data: [
-                  ...payload.to.map((email) => ({
-                    emailAddress: email,
-                    role: 'to' as const,
-                    status: 'sent' as const,
-                  })),
-                  ...(payload.cc || []).map((email) => ({
-                    emailAddress: email,
-                    role: 'cc' as const,
-                    status: 'sent' as const,
-                  })),
-                  ...(payload.bcc || []).map((email) => ({
-                    emailAddress: email,
-                    role: 'bcc' as const,
-                    status: 'sent' as const,
-                  })),
-                ],
+                data: [...recipients.to, ...recipients.cc, ...recipients.bcc],
               },
             },
           })
 
-          return apiResponse({ status: true, result: { id: email.id } }, 200)
+          const { rawHeaders, replyTo, rawBody, ...rest } = createdEmail
+          await triggerWebhook('email.sent', rest)
+
+          return apiResponse(
+            { status: true, result: { id: createdEmail.id } },
+            200,
+          )
         } catch (error) {
-          if (error instanceof Error) {
-            console.error(
-              'Email sending failed:',
-              (error as Error & { code: string }).code,
-              error.message,
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error('CRITICAL: Email sent but DB save failed:', error)
+            return apiResponse(
+              {
+                status: false,
+                errors: [
+                  'Email was sent but could not be saved to the database.',
+                ],
+              },
+              500,
+            )
+          } else if (error instanceof Error) {
+            console.error('Email send failed:', error.message)
+            return apiResponse(
+              { status: false, errors: ['Failed to send email'] },
+              500,
             )
           }
+
           return apiResponse(
-            { status: false, errors: 'An unknown error occurred' },
+            { status: false, errors: ['An unexpected error occurred'] },
             500,
           )
         }
