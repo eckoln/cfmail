@@ -35,6 +35,12 @@ enum RecipientRole {
   bcc
 }
 
+enum DeliveryStatus {
+  queued
+  success
+  failed
+}
+
 // Models
 model Email {
   id         String    @id @default(uuid())
@@ -73,4 +79,45 @@ model Recipient {
   @@index([emailId])
   @@index([emailAddress])
   @@map("recipients")
+}
+
+model Webhook {
+  id  String @id @default(uuid())
+  url String
+
+  events Json @default("[]")
+
+  isActive Boolean @default(true)
+  secret   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries WebhookDelivery[]
+
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id        String @id @default(uuid())
+  webhookId String
+
+  eventType String
+  payload   Json
+
+  status       DeliveryStatus
+  httpStatus   Int?
+  responseBody String?
+
+  attempts    Int      @default(0)
+  attemptedAt DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([eventType])
+  @@index([status])
+  @@index([attemptedAt])
+  @@map("webhook_deliveries")
 }

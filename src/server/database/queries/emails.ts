@@ -4,7 +4,7 @@ import { createDatabase } from '../database'
 
 export async function createEmail(payload: Omit<EmailCreateInput, 'id'>) {
   const database = createDatabase()
-  return database.email.create({ data: payload })
+  return database.email.create({ data: payload, include: { recipients: true } })
 }
 
 export async function listEmailsByType(type: EmailType) {

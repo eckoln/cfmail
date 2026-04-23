@@ -2,6 +2,11 @@ import handler from '@tanstack/react-start/server-entry'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import PostalMime from 'postal-mime'
 import { createEmail } from './server/database/queries/emails'
+import { processWebhookBatch } from './server/webhook/consumer'
+import {
+  triggerWebhook,
+  type WebhookQueueMessage,
+} from './server/webhook/webhook'
 
 export default {
   async fetch(request, env) {
@@ -27,7 +32,7 @@ export default {
         })
       }
 
-      const jwksUrl = new URL(`${TEAM_DOMAIN}/cdn-cgi/access/certs`)
+      const jwksUrl = new URL('/cdn-cgi/access/certs', env.TEAM_DOMAIN)
       const JWKS = createRemoteJWKSet(jwksUrl)
 
       try {
@@ -46,7 +51,7 @@ export default {
     return handler.fetch(request)
   },
 
-  async email(message) {
+  async email(message, _env, ctx) {
     try {
       const email = await new PostalMime().parse(message.raw)
 
@@ -54,7 +59,7 @@ export default {
         throw new Error('No recipients found')
       }
 
-      await createEmail({
+      const createdEmail = await createEmail({
         type: 'inbound',
         from: email.from?.address || '',
         subject: email.subject || '',
@@ -73,9 +78,16 @@ export default {
           },
         },
       })
+
+      const { rawHeaders, replyTo, rawBody, ...rest } = createdEmail
+      ctx.waitUntil(triggerWebhook('email.received', rest))
     } catch (error) {
       console.error('Error while processing email: ', error)
       message.setReject('550 Message rejected due to processing error')
     }
   },
-} as ExportedHandler<Env>
+
+  async queue(batch) {
+    await processWebhookBatch(batch as MessageBatch<WebhookQueueMessage>)
+  },
+} satisfies ExportedHandler<Env>

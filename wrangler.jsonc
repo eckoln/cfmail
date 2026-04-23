@@ -17,5 +17,27 @@
       "database_id": "8c885bb1-5717-4a01-9323-669d0c34adad",
       "migrations_dir": "./prisma/migrations"
     }
-  ]
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "WEBHOOK_QUEUE",
+        "queue": "cfmail-webhooks"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "cfmail-webhooks",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 3
+      }
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    }
+  }
 }

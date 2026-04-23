@@ -1,5 +1,5 @@
 import { Sidebar, Text } from '@cloudflare/kumo'
-import { EnvelopeIcon, UserIcon } from '@phosphor-icons/react'
+import { ArrowsDownUpIcon, EnvelopeIcon, UserIcon } from '@phosphor-icons/react'
 import { Link, useRouteContext } from '@tanstack/react-router'
 
 export function DashboardSidebar() {
@@ -18,6 +18,13 @@ export function DashboardSidebar() {
               {({ isActive }) => (
                 <Sidebar.MenuButton icon={EnvelopeIcon} active={isActive}>
                   Emails
+                </Sidebar.MenuButton>
+              )}
+            </Link>
+            <Link to="/webhooks">
+              {({ isActive }) => (
+                <Sidebar.MenuButton icon={ArrowsDownUpIcon} active={isActive}>
+                  Webhooks
                 </Sidebar.MenuButton>
               )}
             </Link>
