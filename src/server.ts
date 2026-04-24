@@ -1,8 +1,6 @@
 import handler from '@tanstack/react-start/server-entry'
-import PostalMime from 'postal-mime'
 import { getUser } from './lib/queries/user'
-import { createDatabase } from './server/database/database'
-import { createEmail } from './server/database/queries/emails'
+import { receiveEmail } from './server/emails/receive'
 import { processWebhookBatch } from './server/webhook/consumer'
 
 import type { WebhookQueueMessage } from './server/webhook/webhook'
@@ -38,37 +36,8 @@ export default {
 
   async email(message, _env, ctx) {
     try {
-      const email = await new PostalMime().parse(message.raw)
-
-      if (!email.to?.length || !email.to[0].address) {
-        throw new Error('No recipients found')
-      }
-
-      const database = createDatabase()
-      const createdEmail = await createEmail(database, {
-        type: 'inbound',
-        from: email.from?.address || '',
-        subject: email.subject || '',
-        rawBody: email.html || email.text || '',
-        rawHeaders: email.headers,
-        replyTo:
-          email.replyTo?.map((reply) => reply.address || '').filter(Boolean) ||
-          undefined,
-        messageId: email.messageId,
-        lastEvent: 'received',
-        recipients: {
-          create: {
-            emailAddress: message.to,
-            role: 'to',
-            status: 'received',
-          },
-        },
-      })
-
-      const { rawHeaders, replyTo, rawBody, ...rest } = createdEmail
-      ctx.waitUntil(triggerWebhook('email.received', rest))
-    } catch (error) {
-      console.error('Error while processing email: ', error)
+      await receiveEmail(message, ctx)
+    } catch {
       message.setReject('550 Message rejected due to processing error')
     }
   },
