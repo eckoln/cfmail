@@ -4,12 +4,14 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { CreateWebhookForm } from '@/components/webhooks/create-webhook-form'
 import { WebhookActions } from '@/components/webhooks/webhook-actions-button'
-import { listWebhooksOptions } from '@/lib/queries/webhooks'
+import { useTRPC } from '@/server/api/trpc/client'
 
 export const Route = createFileRoute('/(app)/webhooks/')({
   component: RouteComponent,
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(listWebhooksOptions())
+    await context.queryClient.ensureQueryData(
+      context.trpc.webhooks.list.queryOptions(),
+    )
   },
   head: () => ({
     meta: [
@@ -21,7 +23,11 @@ export const Route = createFileRoute('/(app)/webhooks/')({
 })
 
 function RouteComponent() {
-  const { data: webhooks } = useSuspenseQuery(listWebhooksOptions())
+  const trpc = useTRPC()
+
+  const { data: webhooks } = useSuspenseQuery(
+    trpc.webhooks.list.queryOptions(undefined, { refetchInterval: 5000 }),
+  )
 
   return (
     <div className="space-y-6">

@@ -2,17 +2,23 @@ import { Badge, Empty, LayerCard, Table } from '@cloudflare/kumo'
 import { EnvelopeIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { listEmailsOptions } from '@/lib/queries/emails'
+import { useTRPC } from '@/server/api/trpc/client'
 
 export const Route = createFileRoute('/(app)/emails/(lists)/')({
   component: RouteComponent,
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(listEmailsOptions('outbound'))
+    await context.queryClient.ensureQueryData(
+      context.trpc.emails.list.queryOptions('outbound'),
+    )
   },
 })
 
 function RouteComponent() {
-  const { data: emails } = useSuspenseQuery(listEmailsOptions('outbound'))
+  const trpc = useTRPC()
+
+  const { data: emails } = useSuspenseQuery(
+    trpc.emails.list.queryOptions('outbound', { refetchInterval: 5000 }),
+  )
 
   return (
     <div>

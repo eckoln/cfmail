@@ -1,12 +1,12 @@
 import handler from '@tanstack/react-start/server-entry'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
 import PostalMime from 'postal-mime'
+import { getUser } from './lib/queries/user'
+import { createDatabase } from './server/database/database'
 import { createEmail } from './server/database/queries/emails'
 import { processWebhookBatch } from './server/webhook/consumer'
-import {
-  triggerWebhook,
-  type WebhookQueueMessage,
-} from './server/webhook/webhook'
+
+import type { WebhookQueueMessage } from './server/webhook/webhook'
+import { apiResponse } from './utils/api-response'
 
 export default {
   async fetch(request, env) {
@@ -14,37 +14,22 @@ export default {
       const { POLICY_AUD, TEAM_DOMAIN } = env
 
       if (!POLICY_AUD || !TEAM_DOMAIN) {
-        return new Response(
-          'Cloudflare Access must be configured in production. Set POLICY_AUD and TEAM_DOMAIN.',
+        return apiResponse(
           {
-            status: 403,
-            headers: { 'Content-Type': 'text/plain' },
+            status: false,
+            errors: [
+              'Cloudflare Access must be configured in production. Set POLICY_AUD and TEAM_DOMAIN.',
+            ],
           },
+          403,
         )
       }
 
-      const token = request.headers.get('CF-Access-JWT-Assertion')
-
-      if (!token) {
-        return new Response('Missing required CF Access JWT', {
-          status: 403,
-          headers: { 'Content-Type': 'text/plain' },
-        })
-      }
-
-      const jwksUrl = new URL('/cdn-cgi/access/certs', env.TEAM_DOMAIN)
-      const JWKS = createRemoteJWKSet(jwksUrl)
-
       try {
-        await jwtVerify(token, JWKS, {
-          issuer: TEAM_DOMAIN,
-          audience: POLICY_AUD,
-        })
-      } catch {
-        return new Response('Invalid token', {
-          status: 403,
-          headers: { 'Content-Type': 'text/plain' },
-        })
+        await getUser(request.headers)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        return apiResponse({ status: false, errors: [message] }, 403)
       }
     }
 
@@ -59,7 +44,8 @@ export default {
         throw new Error('No recipients found')
       }
 
-      const createdEmail = await createEmail({
+      const database = createDatabase()
+      const createdEmail = await createEmail(database, {
         type: 'inbound',
         from: email.from?.address || '',
         subject: email.subject || '',

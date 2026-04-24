@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
 import { Prisma } from 'generated/prisma/client'
 import { z } from 'zod'
+import { createDatabase } from '@/server/database/database'
 import { createEmail } from '@/server/database/queries/emails'
 import { triggerWebhook } from '@/server/webhook/webhook'
 import { apiResponse } from '@/utils/api-response'
@@ -92,7 +93,9 @@ export const Route = createFileRoute('/api/emails/')({
             })),
           }
 
-          const createdEmail = await createEmail({
+          const database = createDatabase()
+
+          const createdEmail = await createEmail(database, {
             type: 'outbound',
             from:
               typeof payload.from === 'string'

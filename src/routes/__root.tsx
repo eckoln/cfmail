@@ -4,9 +4,12 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router'
+import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
+import type { TRPCRouter } from '@/server/api/trpc/routes'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRouteWithContext<{
+  trpc: TRPCOptionsProxy<TRPCRouter>
   queryClient: QueryClient
 }>()({
   head: () => ({

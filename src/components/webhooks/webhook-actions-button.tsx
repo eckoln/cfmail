@@ -1,19 +1,18 @@
 import { Button, DropdownMenu, Loader } from '@cloudflare/kumo'
 import { DotsThreeIcon, TrashIcon } from '@phosphor-icons/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  deleteWebhookOptions,
-  listWebhooksOptions,
-} from '@/lib/queries/webhooks'
+import { useTRPC } from '@/server/api/trpc/client'
 
 export function WebhookActions({ id }: { id: string }) {
-  const mutation = useMutation(deleteWebhookOptions())
+  const trpc = useTRPC()
   const queryClient = useQueryClient()
 
-  function handleDelete() {
-    mutation.mutate(id, {
+  const mutation = useMutation(trpc.webhooks.delete.mutationOptions())
+
+  async function handleDelete() {
+    await mutation.mutateAsync(id, {
       onSuccess: () => {
-        queryClient.invalidateQueries(listWebhooksOptions())
+        queryClient.invalidateQueries(trpc.webhooks.list.queryOptions())
       },
     })
   }
