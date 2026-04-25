@@ -15,21 +15,18 @@ import {
 import { useSuspenseQueries } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import React, { useState } from 'react'
-import {
-  getWebhookByIdOptions,
-  listWebhookDeliveriesOptions,
-} from '@/lib/queries/webhooks'
+import { useTRPC } from '@/server/api/trpc/client'
 
 export const Route = createFileRoute('/(app)/webhooks/$id')({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     try {
       const webhook = await context.queryClient.ensureQueryData(
-        getWebhookByIdOptions(params.id),
+        context.trpc.webhooks.get.queryOptions(params.id),
       )
 
       await context.queryClient.ensureQueryData(
-        listWebhookDeliveriesOptions(params.id),
+        context.trpc.webhooks.deliveries.list.queryOptions(params.id),
       )
 
       return { webhook }
@@ -40,20 +37,24 @@ export const Route = createFileRoute('/(app)/webhooks/$id')({
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: `${loaderData?.webhook?.url || 'Webhook'} - cfmail`,
+        title: `${loaderData?.webhook.url || 'Webhook'} - cfmail`,
       },
     ],
   }),
 })
 
 function RouteComponent() {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+
+  const trpc = useTRPC()
   const { id } = Route.useParams()
 
   const [{ data: webhook }, { data: deliveries }] = useSuspenseQueries({
-    queries: [getWebhookByIdOptions(id), listWebhookDeliveriesOptions(id)],
+    queries: [
+      trpc.webhooks.get.queryOptions(id),
+      trpc.webhooks.deliveries.list.queryOptions(id),
+    ],
   })
-
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   const toggleRow = (rowId: string) => {
     setExpandedRows((prev) => {

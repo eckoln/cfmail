@@ -1,27 +1,18 @@
 import { Sidebar } from '@cloudflare/kumo'
 import { createFileRoute, notFound, Outlet } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeaders } from '@tanstack/react-start/server'
 import { DashboardSidebar } from '@/components/sidebar'
-import { getUser } from '@/lib/queries/user'
-
-const getUserServerFn = createServerFn().handler(async () => {
-  if (!import.meta.env.DEV) {
-    return getUser(getRequestHeaders())
-  }
-  return { email: 'localhost' }
-})
 
 export const Route = createFileRoute('/(app)')({
   component: RouteComponent,
-  beforeLoad: async () => {
-    const user = await getUserServerFn()
-
-    if (!user) {
+  beforeLoad: async ({ context }) => {
+    try {
+      const user = await context.queryClient.fetchQuery(
+        context.trpc.users.me.queryOptions(),
+      )
+      return { user }
+    } catch {
       throw notFound()
     }
-
-    return { user }
   },
 })
 

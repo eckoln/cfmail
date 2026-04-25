@@ -2,9 +2,13 @@ import { env } from 'cloudflare:workers'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 export async function getUser(headers: Headers) {
+  if (import.meta.env.DEV) {
+    return { email: 'user@localhost' }
+  }
+
   const token = headers.get('CF-Access-JWT-Assertion')
   if (!token) {
-    return null
+    throw new Error('Missing required CF Access JWT')
   }
 
   const JWKS = createRemoteJWKSet(
@@ -18,6 +22,6 @@ export async function getUser(headers: Headers) {
     })
     return { email: payload.email as string }
   } catch {
-    return null
+    throw new Error('Invalid token')
   }
 }

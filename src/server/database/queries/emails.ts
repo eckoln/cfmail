@@ -1,27 +1,25 @@
+import type { PrismaClient } from 'generated/prisma/client'
 import type { EmailType } from 'generated/prisma/enums'
 import type { EmailCreateInput } from 'generated/prisma/models'
-import { createDatabase } from '../database'
 
-export async function createEmail(payload: Omit<EmailCreateInput, 'id'>) {
-  const database = createDatabase()
-  return database.email.create({ data: payload, include: { recipients: true } })
+export async function createEmail(
+  db: PrismaClient,
+  payload: Omit<EmailCreateInput, 'id'>,
+) {
+  return db.email.create({ data: payload, include: { recipients: true } })
 }
 
-export async function listEmailsByType(type: EmailType) {
-  const database = createDatabase()
-  return database.email.findMany({
+export async function listEmailsByType(db: PrismaClient, type: EmailType) {
+  return db.email.findMany({
     where: { type },
     include: { recipients: true },
     orderBy: { createdAt: 'desc' },
   })
 }
 
-export async function getEmailById(id: string) {
-  const database = createDatabase()
-  return database.email.findUniqueOrThrow({
+export async function getEmailById(db: PrismaClient, id: string) {
+  return db.email.findUniqueOrThrow({
     where: { id },
-    include: {
-      recipients: true,
-    },
+    include: { recipients: true },
   })
 }

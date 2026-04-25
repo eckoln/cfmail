@@ -3,14 +3,14 @@ import { EnvelopeIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import React from 'react'
-import { getEmailByIdOptions } from '@/lib/queries/emails'
+import { useTRPC } from '@/server/api/trpc/client'
 
 export const Route = createFileRoute('/(app)/emails/$id')({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     try {
       const email = await context.queryClient.ensureQueryData(
-        getEmailByIdOptions(params.id),
+        context.trpc.emails.get.queryOptions(params.id),
       )
 
       return { email }
@@ -21,16 +21,19 @@ export const Route = createFileRoute('/(app)/emails/$id')({
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: `${loaderData?.email?.subject || 'Email'} - cfmail`,
+        title: `${loaderData?.email.subject || 'Email'} - cfmail`,
       },
     ],
   }),
 })
 
 function RouteComponent() {
-  const { id } = Route.useParams()
-  const { data: email } = useSuspenseQuery(getEmailByIdOptions(id))
   const [activeTab, setActiveTab] = React.useState<string>('preview')
+
+  const trpc = useTRPC()
+  const { id } = Route.useParams()
+
+  const { data: email } = useSuspenseQuery(trpc.emails.get.queryOptions(id))
 
   return (
     <div className="space-y-8">
@@ -101,7 +104,6 @@ function RouteComponent() {
               title="Email Preview"
               className="w-full h-full"
               srcDoc={email.rawBody || ''}
-              sandbox="allow-same-origin"
             />
           ) : (
             <pre className="overflow-auto w-full max-h-125">

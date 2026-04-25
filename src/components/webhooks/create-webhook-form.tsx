@@ -1,32 +1,40 @@
 import { Button, Dialog, Input, Select } from '@cloudflare/kumo'
 import { PlusIcon, XIcon } from '@phosphor-icons/react'
 import { useForm } from '@tanstack/react-form'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import type z from 'zod'
-import {
-  createWebhookOptions,
-  createWebhookSchema,
-} from '@/lib/queries/webhooks'
+import z from 'zod'
+import { useTRPC } from '@/server/api/trpc/client'
+
+export const formSchema = z.object({
+  endpoint: z.url(),
+  eventTypes: z.array(z.string()).nonempty(),
+})
 
 export function CreateWebhookForm() {
+  const trpc = useTRPC()
   const navigate = useNavigate()
-  const mutation = useMutation(createWebhookOptions())
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation(
+    trpc.webhooks.create.mutationOptions({
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(trpc.webhooks.list.queryOptions())
+        navigate({ to: '/webhooks/$id', params: { id: data.id } })
+      },
+    }),
+  )
 
   const form = useForm({
     defaultValues: {
       endpoint: '',
       eventTypes: [],
-    } as z.infer<typeof createWebhookSchema>,
+    } as z.infer<typeof formSchema>,
     validators: {
-      onChange: createWebhookSchema,
+      onChange: formSchema,
     },
     onSubmit: async ({ value }) => {
-      await mutation.mutateAsync(value, {
-        onSuccess: (data) => {
-          navigate({ to: '/webhooks/$id', params: { id: data.id } })
-        },
-      })
+      await mutation.mutateAsync(value)
     },
   })
 
