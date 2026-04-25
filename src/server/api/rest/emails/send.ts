@@ -56,7 +56,7 @@ export async function sendEmail(payload: EmailSendInput) {
       throw new Error('Email sent but could not be saved to the database.')
     } else if (error instanceof Error) {
       console.error('Email send failed:', error.message)
-      throw new Error('Failed to send email')
+      throw new Error(error.message)
     }
     throw error
   }

@@ -5,11 +5,16 @@
  * @param statusCode The HTTP status code.
  * @returns A Response object with the given data.
  */
+export interface ApiError {
+  message: string
+  path?: (string | number | symbol)[]
+}
+
 export function apiResponse<T = unknown>(
   data: {
     status: boolean
     result?: T
-    errors?: unknown
+    errors?: ApiError[]
   },
   statusCode: number = 200,
 ): Response {

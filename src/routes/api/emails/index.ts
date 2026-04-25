@@ -12,7 +12,18 @@ export const Route = createFileRoute('/api/emails/')({
           const email = await sendEmail(context.data)
           return apiResponse({ status: true, result: { id: email.id } }, 200)
         } catch (error) {
-          return apiResponse({ status: false, errors: [error] }, 500)
+          return apiResponse(
+            {
+              status: false,
+              errors: [
+                {
+                  message:
+                    error instanceof Error ? error.message : 'Unknown error',
+                },
+              ],
+            },
+            500,
+          )
         }
       },
     },

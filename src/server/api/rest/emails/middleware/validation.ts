@@ -9,7 +9,16 @@ export const validationMiddleware = createMiddleware({
   const result = emailSendSchema.safeParse(payload)
 
   if (!result.success) {
-    return apiResponse({ status: false, errors: result.error.issues }, 400)
+    return apiResponse(
+      {
+        status: false,
+        errors: result.error.issues.map((issue) => ({
+          message: issue.message,
+          path: issue.path,
+        })),
+      },
+      400,
+    )
   }
 
   return next({ context: { data: result.data } })

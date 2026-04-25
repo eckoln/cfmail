@@ -16,7 +16,10 @@ export default {
           {
             status: false,
             errors: [
-              'Cloudflare Access must be configured in production. Set POLICY_AUD and TEAM_DOMAIN.',
+              {
+                message:
+                  'Cloudflare Access must be configured in production. Set POLICY_AUD and TEAM_DOMAIN.',
+              },
             ],
           },
           403,
@@ -27,7 +30,10 @@ export default {
         await getUser(request.headers)
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
-        return apiResponse({ status: false, errors: [message] }, 403)
+        return apiResponse(
+          { status: false, errors: [{ message }] },
+          403,
+        )
       }
     }
 
