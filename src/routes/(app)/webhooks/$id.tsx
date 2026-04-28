@@ -56,7 +56,10 @@ function RouteComponent() {
   const [{ data: webhook }, { data: deliveries }] = useSuspenseQueries({
     queries: [
       trpc.webhooks.get.queryOptions(id),
-      trpc.webhooks.deliveries.list.queryOptions(id),
+      trpc.webhooks.deliveries.list.queryOptions(id, {
+        staleTime: 0,
+        refetchInterval: 5000,
+      }),
     ],
   })
 

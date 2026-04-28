@@ -17,7 +17,10 @@ function RouteComponent() {
   const trpc = useTRPC()
 
   const { data: emails } = useSuspenseQuery(
-    trpc.emails.list.queryOptions('outbound', { refetchInterval: 5000 }),
+    trpc.emails.list.queryOptions('outbound', {
+      staleTime: 0,
+      refetchInterval: 5000,
+    }),
   )
 
   return (
