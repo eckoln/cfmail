@@ -30,10 +30,7 @@ export default {
         await getUser(request.headers)
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
-        return apiResponse(
-          { status: false, errors: [{ message }] },
-          403,
-        )
+        return apiResponse({ status: false, errors: [{ message }] }, 403)
       }
     }
 

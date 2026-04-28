@@ -10,7 +10,8 @@ import {
 import { t } from '../trpc'
 
 const createWebhookSchema = z.object({
-  endpoint: z.url(),
+  provider: z.enum(['raw', 'discord', 'slack', 'telegram']),
+  endpoint: z.url().nonempty(),
   eventTypes: z.array(z.string()).nonempty(),
 })
 
@@ -25,9 +26,10 @@ export const webhooksRouter = t.router({
 
   create: t.procedure.input(createWebhookSchema).mutation(({ ctx, input }) => {
     return createWebhook(ctx.database, {
-      secret: `wh_${crypto.randomBytes(16).toString('hex')}`,
       url: input.endpoint,
       events: input.eventTypes,
+      provider: input.provider,
+      secret: `wh_${crypto.randomBytes(16).toString('hex')}`,
     })
   }),
 

@@ -7,7 +7,8 @@ import z from 'zod'
 import { useTRPC } from '@/server/api/trpc/client'
 
 export const formSchema = z.object({
-  endpoint: z.url(),
+  provider: z.enum(['raw', 'discord', 'slack', 'telegram']),
+  endpoint: z.url().nonempty(),
   eventTypes: z.array(z.string()).nonempty(),
 })
 
@@ -27,12 +28,11 @@ export function CreateWebhookForm() {
 
   const form = useForm({
     defaultValues: {
+      provider: 'raw',
       endpoint: '',
       eventTypes: [],
     } as z.infer<typeof formSchema>,
-    validators: {
-      onChange: formSchema,
-    },
+    validators: { onChange: formSchema },
     onSubmit: async ({ value }) => {
       await mutation.mutateAsync(value)
     },
@@ -47,7 +47,7 @@ export function CreateWebhookForm() {
           </Button>
         )}
       />
-      <Dialog className="flex flex-col gap-4 p-4 w-full sm:min-w-md">
+      <Dialog className="flex flex-col gap-4 p-4 w-full sm:w-full sm:max-w-lg">
         <div className="flex items-start justify-between gap-4">
           <Dialog.Title className="text-lg font-semibold">
             Add Webhook
@@ -74,6 +74,32 @@ export function CreateWebhookForm() {
           }}
         >
           <div className="flex flex-col gap-4">
+            <form.Field name="provider">
+              {(field) => {
+                return (
+                  <Select
+                    name={field.name}
+                    label="Provider"
+                    className="w-full"
+                    items={[
+                      { label: 'Raw', value: 'raw' },
+                      { label: 'Discord', value: 'discord' },
+                      { label: 'Slack', value: 'slack' },
+                      { label: 'Telegram', value: 'telegram' },
+                    ]}
+                    description={
+                      field.state.value === 'telegram'
+                        ? 'Example: https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<ID>'
+                        : null
+                    }
+                    value={field.state.value}
+                    onValueChange={(value) => field.setValue(value as any)}
+                    required
+                  />
+                )
+              }}
+            </form.Field>
+
             <form.Field name="endpoint">
               {(field) => {
                 return (

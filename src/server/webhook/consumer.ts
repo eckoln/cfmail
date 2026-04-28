@@ -1,4 +1,3 @@
-import crypto from 'node:crypto'
 import type { PrismaClient } from 'generated/prisma/client'
 import type { DeliveryStatus } from 'generated/prisma/enums'
 import { createDatabase } from '../database/database'
@@ -6,11 +5,8 @@ import {
   createWebhookDeliveryItem,
   getActiveWebhookById,
 } from '../database/queries/webhooks'
+import { WebhookProvider } from './providers'
 import type { WebhookQueueMessage } from './webhook'
-
-function generateSignature(body: string, secret: string): string {
-  return crypto.createHmac('sha256', secret).update(body).digest('hex')
-}
 
 async function deliverWebhook(
   url: string,
@@ -33,22 +29,17 @@ export async function processWebhook(
   db: PrismaClient,
   message: Message<WebhookQueueMessage>,
 ) {
-  const webhook = await getActiveWebhookById(db, message.body.webhookId)
-  if (!webhook) {
+  const { webhook, eventType, payload } = message.body
+  const { provider, secret, id, url } = webhook
+
+  const activeWebhook = await getActiveWebhookById(db, id)
+  if (!activeWebhook) {
     message.ack()
     return
   }
 
-  const { webhookId, eventType, url, secret, payload } = message.body
-
-  const body = JSON.stringify(payload)
-  const signature = generateSignature(body, secret)
-
-  const headers = new Headers({
-    'Content-Type': 'application/json',
-    'X-Webhook-Signature': signature,
-    'X-Webhook-ID': webhookId,
-  })
+  const webhookTarget = new WebhookProvider(provider, secret)
+  const { body, headers } = webhookTarget.transform(url, payload)
 
   const { status, httpStatus } = await deliverWebhook(url, headers, body)
   if (status === 'success') {
@@ -65,11 +56,7 @@ export async function processWebhook(
       httpStatus,
       responseBody: null,
       attempts: message.attempts,
-      webhook: {
-        connect: {
-          id: webhookId,
-        },
-      },
+      webhook: { connect: { id } },
     })
   } catch (error) {
     console.error('Unhandled error in createWebhookDeliveryItem:', error)

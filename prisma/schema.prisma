@@ -41,6 +41,13 @@ enum DeliveryStatus {
   failed
 }
 
+enum WebhookProviderType {
+  raw
+  discord
+  slack
+  telegram
+}
+
 // Models
 model Email {
   id         String    @id @default(uuid())
@@ -82,8 +89,9 @@ model Recipient {
 }
 
 model Webhook {
-  id  String @id @default(uuid())
-  url String
+  id       String              @id @default(uuid())
+  provider WebhookProviderType
+  url      String
 
   events Json @default("[]")
 
