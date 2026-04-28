@@ -13,6 +13,7 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as ApiEmailsIndexRouteImport } from './routes/api/emails/index'
 import { Route as appWebhooksIndexRouteImport } from './routes/(app)/webhooks/index'
+import { Route as appApiIndexRouteImport } from './routes/(app)/api/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc/$'
 import { Route as appWebhooksIdRouteImport } from './routes/(app)/webhooks/$id'
 import { Route as appEmailsIdRouteImport } from './routes/(app)/emails/$id'
@@ -37,6 +38,11 @@ const ApiEmailsIndexRoute = ApiEmailsIndexRouteImport.update({
 const appWebhooksIndexRoute = appWebhooksIndexRouteImport.update({
   id: '/webhooks/',
   path: '/webhooks/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appApiIndexRoute = appApiIndexRouteImport.update({
+  id: '/api/',
+  path: '/api/',
   getParentRoute: () => appRouteRoute,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/emails/$id': typeof appEmailsIdRoute
   '/webhooks/$id': typeof appWebhooksIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/': typeof appApiIndexRoute
   '/webhooks/': typeof appWebhooksIndexRoute
   '/api/emails/': typeof ApiEmailsIndexRoute
   '/emails/receiving': typeof appEmailslistsReceivingRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/emails/$id': typeof appEmailsIdRoute
   '/webhooks/$id': typeof appWebhooksIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api': typeof appApiIndexRoute
   '/webhooks': typeof appWebhooksIndexRoute
   '/api/emails': typeof ApiEmailsIndexRoute
   '/emails/receiving': typeof appEmailslistsReceivingRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/(app)/emails/$id': typeof appEmailsIdRoute
   '/(app)/webhooks/$id': typeof appWebhooksIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/(app)/api/': typeof appApiIndexRoute
   '/(app)/webhooks/': typeof appWebhooksIndexRoute
   '/api/emails/': typeof ApiEmailsIndexRoute
   '/(app)/emails/(lists)/receiving': typeof appEmailslistsReceivingRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/emails/$id'
     | '/webhooks/$id'
     | '/api/trpc/$'
+    | '/api/'
     | '/webhooks/'
     | '/api/emails/'
     | '/emails/receiving'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/emails/$id'
     | '/webhooks/$id'
     | '/api/trpc/$'
+    | '/api'
     | '/webhooks'
     | '/api/emails'
     | '/emails/receiving'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/(app)/emails/$id'
     | '/(app)/webhooks/$id'
     | '/api/trpc/$'
+    | '/(app)/api/'
     | '/(app)/webhooks/'
     | '/api/emails/'
     | '/(app)/emails/(lists)/receiving'
@@ -174,6 +186,13 @@ declare module '@tanstack/react-router' {
       path: '/webhooks'
       fullPath: '/webhooks/'
       preLoaderRoute: typeof appWebhooksIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/api/': {
+      id: '/(app)/api/'
+      path: '/api'
+      fullPath: '/api/'
+      preLoaderRoute: typeof appApiIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/api/trpc/$': {
@@ -239,6 +258,7 @@ interface appRouteRouteChildren {
   appEmailslistsRouteRoute: typeof appEmailslistsRouteRouteWithChildren
   appEmailsIdRoute: typeof appEmailsIdRoute
   appWebhooksIdRoute: typeof appWebhooksIdRoute
+  appApiIndexRoute: typeof appApiIndexRoute
   appWebhooksIndexRoute: typeof appWebhooksIndexRoute
 }
 
@@ -247,6 +267,7 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appEmailslistsRouteRoute: appEmailslistsRouteRouteWithChildren,
   appEmailsIdRoute: appEmailsIdRoute,
   appWebhooksIdRoute: appWebhooksIdRoute,
+  appApiIndexRoute: appApiIndexRoute,
   appWebhooksIndexRoute: appWebhooksIndexRoute,
 }
 

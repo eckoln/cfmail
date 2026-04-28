@@ -1,5 +1,10 @@
 import { Sidebar, Text } from '@cloudflare/kumo'
-import { ArrowsDownUpIcon, EnvelopeIcon, UserIcon } from '@phosphor-icons/react'
+import {
+  ArrowsDownUpIcon,
+  EnvelopeIcon,
+  TerminalWindowIcon,
+  UserIcon,
+} from '@phosphor-icons/react'
 import { Link, useRouteContext } from '@tanstack/react-router'
 
 export function DashboardSidebar() {
@@ -25,6 +30,13 @@ export function DashboardSidebar() {
               {({ isActive }) => (
                 <Sidebar.MenuButton icon={ArrowsDownUpIcon} active={isActive}>
                   Webhooks
+                </Sidebar.MenuButton>
+              )}
+            </Link>
+            <Link to="/api">
+              {({ isActive }) => (
+                <Sidebar.MenuButton icon={TerminalWindowIcon} active={isActive}>
+                  API Reference
                 </Sidebar.MenuButton>
               )}
             </Link>
