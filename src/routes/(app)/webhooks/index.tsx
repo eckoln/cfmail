@@ -42,7 +42,7 @@ function RouteComponent() {
             <Table.Header variant="compact">
               <Table.Row>
                 <Table.Head>Endpoint</Table.Head>
-                <Table.Head>Status</Table.Head>
+                <Table.Head className="w-20">Status</Table.Head>
                 <Table.Head className="text-right">Created</Table.Head>
                 <Table.Head className="w-20" />
               </Table.Row>
@@ -55,10 +55,10 @@ function RouteComponent() {
                       <Link
                         to="/webhooks/$id"
                         params={{ id: webhook.id }}
-                        className="flex items-center gap-3 w-fit hover:underline [&_svg]:text-kumo-strong"
+                        className="flex items-center gap-3 w-full min-w-0 overflow-hidden hover:underline [&_svg]:shrink-0 [&_svg]:text-kumo-strong"
                       >
                         <ArrowsDownUpIcon size={20} />
-                        <span>{webhook.url}</span>
+                        <Text truncate>{webhook.url}</Text>
                       </Link>
                     </Table.Cell>
                     <Table.Cell>

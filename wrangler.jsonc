@@ -30,9 +30,14 @@
         "queue": "cfmail-webhooks",
         "max_batch_size": 10,
         "max_batch_timeout": 5,
-        "max_retries": 3
+        "max_retries": 3,
+        "retry_delay": 10
       }
     ]
+  },
+  "vars": {
+    // URL of the worker, used for constructing webhook URLs
+    "APP_URL": "http://localhost:3000"
   },
   "observability": {
     "enabled": true,

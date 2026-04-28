@@ -1,4 +1,5 @@
 import { ClipboardText, LayerCard, Tabs, Text } from '@cloudflare/kumo'
+import { CodeHighlighted } from '@cloudflare/kumo/code'
 import { EnvelopeIcon } from '@phosphor-icons/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
@@ -106,9 +107,13 @@ function RouteComponent() {
               srcDoc={email.rawBody || ''}
             />
           ) : (
-            <pre className="overflow-auto w-full max-h-125">
-              <code>{JSON.stringify(email, null, 2)}</code>
-            </pre>
+            <CodeHighlighted
+              className="max-h-125 overflow-auto"
+              code={JSON.stringify(email, null, 2)}
+              lang="json"
+              showLineNumbers
+              showCopyButton
+            />
           )}
         </LayerCard.Primary>
       </LayerCard>

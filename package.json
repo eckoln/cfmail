@@ -2,6 +2,21 @@
   "name": "cfmail",
   "private": true,
   "type": "module",
+  "cloudflare": {
+    "label": "cfmail",
+    "products": [
+      "Workers",
+      "D1",
+      "Email Sending",
+      "Email Routing",
+      "Queues"
+    ],
+    "bindings": {
+      "APP_URL": {
+        "description": "URL of the worker, used for constructing webhook URLs"
+      }
+    }
+  },
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "bun run db:generate && vite build",

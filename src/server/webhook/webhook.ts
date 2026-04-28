@@ -1,26 +1,34 @@
 import { env } from 'cloudflare:workers'
+import type {
+  EmailModel,
+  RecipientModel,
+  WebhookModel,
+} from 'generated/prisma/models'
 import { createDatabase } from '../database/database'
 import { getActiveWebhooksForEvent } from '../database/queries/webhooks'
 
 export type WebhookEvent = 'email.sent' | 'email.received'
 
 export interface WebhookPayload {
-  type: string
+  type: WebhookEvent
   created_at: string
-  data: Record<string, unknown>
+  data: WebhookEmailData
 }
 
 export interface WebhookQueueMessage {
-  webhookId: string
-  url: string
-  secret: string
+  webhook: WebhookModel
   eventType: WebhookEvent
   payload: WebhookPayload
 }
 
+export interface WebhookEmailData
+  extends Omit<EmailModel, 'rawHeaders' | 'replyTo' | 'rawBody'> {
+  recipients: RecipientModel[]
+}
+
 export async function triggerWebhook(
   eventType: WebhookEvent,
-  data: Record<string, unknown>,
+  data: WebhookEmailData,
 ) {
   const database = createDatabase()
 
@@ -29,21 +37,19 @@ export async function triggerWebhook(
     return
   }
 
-  const payload: WebhookPayload = {
-    type: eventType,
-    created_at: new Date().toISOString(),
-    data,
-  }
-
-  await env.WEBHOOK_QUEUE.sendBatch(
-    webhooks.map((webhook) => ({
+  const messages: MessageSendRequest<WebhookQueueMessage>[] = webhooks.map(
+    (webhook) => ({
       body: {
-        webhookId: webhook.id,
-        url: webhook.url,
-        secret: webhook.secret,
+        webhook,
         eventType,
-        payload,
+        payload: {
+          type: eventType,
+          created_at: new Date().toISOString(),
+          data,
+        },
       },
-    })),
+    }),
   )
+
+  await env.WEBHOOK_QUEUE.sendBatch(messages)
 }

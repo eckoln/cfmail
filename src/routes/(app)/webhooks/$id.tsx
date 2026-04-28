@@ -7,14 +7,18 @@ import {
   Table,
   Text,
 } from '@cloudflare/kumo'
+import { CodeHighlighted } from '@cloudflare/kumo/code'
 import {
   ArrowsDownUpIcon,
   CaretDownIcon,
   CaretRightIcon,
+  CheckIcon,
+  CopyIcon,
 } from '@phosphor-icons/react'
 import { useSuspenseQueries } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import React, { useState } from 'react'
+import { useCopy } from '@/hooks/use-copy'
 import { useTRPC } from '@/server/api/trpc/client'
 
 export const Route = createFileRoute('/(app)/webhooks/$id')({
@@ -48,11 +52,15 @@ function RouteComponent() {
 
   const trpc = useTRPC()
   const { id } = Route.useParams()
+  const { copy, isCopied } = useCopy()
 
   const [{ data: webhook }, { data: deliveries }] = useSuspenseQueries({
     queries: [
       trpc.webhooks.get.queryOptions(id),
-      trpc.webhooks.deliveries.list.queryOptions(id),
+      trpc.webhooks.deliveries.list.queryOptions(id, {
+        staleTime: 0,
+        refetchInterval: 5000,
+      }),
     ],
   })
 
@@ -70,15 +78,33 @@ function RouteComponent() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <ArrowsDownUpIcon className="text-kumo-strong" size={36} />
-          <div>
+      <div className="flex gap-4 items-center justify-between">
+        <div className="w-full flex items-center gap-4 min-w-0">
+          <ArrowsDownUpIcon className="text-kumo-strong shrink-0" size={36} />
+          <div className="min-w-0">
             <Text variant="secondary">Webhook</Text>
-            <Text variant="heading2">{webhook.url}</Text>
+            <div className="flex items-center overflow-hidden group">
+              <Text variant="heading2" truncate>
+                {webhook.url}
+              </Text>
+              <div className="hidden group-hover:inline-flex transition-all">
+                <Button
+                  variant="ghost"
+                  shape="square"
+                  size="sm"
+                  icon={isCopied ? CheckIcon : CopyIcon}
+                  aria-label="Copy URL"
+                  onClick={() => copy(webhook.url)}
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <SensitiveInput label="Secret" defaultValue={webhook.secret} />
+        <SensitiveInput
+          className="shrink-0"
+          label="Secret"
+          defaultValue={webhook.secret}
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-8">
@@ -158,18 +184,20 @@ function RouteComponent() {
                   {expandedRows.has(row.id) && (
                     <Table.Row>
                       <Table.Cell colSpan={5}>
-                        <pre className="max-h-72 overflow-auto">
-                          <code>
-                            {JSON.stringify(
-                              {
-                                ...row,
-                                payload: JSON.parse(row.payload as string),
-                              },
-                              null,
-                              2,
-                            )}
-                          </code>
-                        </pre>
+                        <CodeHighlighted
+                          className="max-h-72 overflow-auto"
+                          code={JSON.stringify(
+                            {
+                              ...row,
+                              payload: JSON.parse(row.payload as string),
+                            },
+                            null,
+                            2,
+                          )}
+                          lang="json"
+                          showLineNumbers
+                          showCopyButton
+                        />
                       </Table.Cell>
                     </Table.Row>
                   )}
