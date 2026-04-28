@@ -7,6 +7,7 @@ import {
   Table,
   Text,
 } from '@cloudflare/kumo'
+import { CodeHighlighted } from '@cloudflare/kumo/code'
 import {
   ArrowsDownUpIcon,
   CaretDownIcon,
@@ -183,18 +184,20 @@ function RouteComponent() {
                   {expandedRows.has(row.id) && (
                     <Table.Row>
                       <Table.Cell colSpan={5}>
-                        <pre className="max-h-72 overflow-auto">
-                          <code>
-                            {JSON.stringify(
-                              {
-                                ...row,
-                                payload: JSON.parse(row.payload as string),
-                              },
-                              null,
-                              2,
-                            )}
-                          </code>
-                        </pre>
+                        <CodeHighlighted
+                          className="max-h-72 overflow-auto"
+                          code={JSON.stringify(
+                            {
+                              ...row,
+                              payload: JSON.parse(row.payload as string),
+                            },
+                            null,
+                            2,
+                          )}
+                          lang="json"
+                          showLineNumbers
+                          showCopyButton
+                        />
                       </Table.Cell>
                     </Table.Row>
                   )}
