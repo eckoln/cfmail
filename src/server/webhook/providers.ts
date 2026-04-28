@@ -9,7 +9,7 @@ interface TransformResult {
 }
 
 export class WebhookProvider {
-  private readonly baseUrl = env.APP_URL
+  private readonly baseUrl = `${env.APP_URL}/emails`
 
   constructor(
     private provider: WebhookProviderType,
